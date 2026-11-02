@@ -92,3 +92,9 @@ saved marker, made while the map is closed. A marker added while the gamepad
 map is open gets its button when the map closes. Keyboard/mouse mode is
 unchanged.
 
+
+### 1.0.7 one world-map overlay
+The world-map overlay is installed once. If `Blizzard_WorldMap` loaded on
+demand between this addon loading and login, both the load event and login
+installed an overlay, and every marker was drawn twice. No other change;
+reviewed against the live client (70707) with no Blizzard API breakage found.

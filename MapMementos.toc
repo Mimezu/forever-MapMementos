@@ -2,14 +2,13 @@
 ## Title: Map Mementos
 ## Notes: A field journal of places worth remembering. /memento
 ## Author: Mimezu
-## Version: 1.0.6
+## Version: 1.0.7
 ## SavedVariables: MapMementosDB
 ## LoadSavedVariablesFirst: 1
 # Settings load through native SavedVariables.
 ## OptionalDeps: FrameGambit, Blizzard_WorldMap
 ## IconTexture: Interface\Icons\INV_Misc_Book_09
 ## Category: Mimezu's Suite
-## Group: Mimezu_Journals
 
 Libs\LibStub.lua
 Libs\CallbackHandler-1.0.lua

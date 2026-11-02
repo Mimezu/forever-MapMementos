@@ -90,7 +90,8 @@ end
 -- Keep marker state outside Blizzard's pin pools and gamepad navigation tables.
 local function installWorldProvider()
     -- The world map can load on demand; ADDON_LOADED installs the overlay then.
-    if not (WorldMapFrame and WorldMapFrame.GetCanvas) then return end
+    -- Once only: a second overlay would draw every marker twice.
+    if worldProvider or not (WorldMapFrame and WorldMapFrame.GetCanvas) then return end
     local canvas = WorldMapFrame:GetCanvas()
     local overlay = CreateFrame("Frame", nil, canvas)
     overlay:SetAllPoints()
