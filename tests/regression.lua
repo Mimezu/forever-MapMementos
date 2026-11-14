@@ -89,7 +89,7 @@ local function load(saved)
     canvas=frame(nil,WorldMapFrame)
     MapMementosDB=saved
     local ns={}; assert(loadfile(root.."Core.lua"))("MapMementos",ns)
-    local ev=frames[#frames]; ev.scripts.OnEvent(ev,"ADDON_LOADED","MapMementos"); ev.scripts.OnEvent(ev,"PLAYER_LOGIN")
+    local ev=frames[#frames]; assert(loadfile(root.."Options.lua"))("MapMementos",ns); ev.scripts.OnEvent(ev,"ADDON_LOADED","MapMementos"); ev.scripts.OnEvent(ev,"PLAYER_LOGIN")
     return ns
 end
 local ns=load(nil)
@@ -210,6 +210,81 @@ print("PASS: no world-map button is created under the open gamepad map; it follo
 print("PASS: create, tooltip data, edit, preserve location, icon, reload, ID allocation, unavailable location, delete, pin cleanup, inherited alpha")
 print("PASS: custom world maps, legacy minimap fallback, draggable launcher geometry")
 
+
+-- Keys, minimap icon and the Esc > Options page.
+function methods:SetShown(v) if v then self:Show() else self:Hide() end end
+function methods:SetChecked(v) self.checked=v end
+function methods:GetChecked() return self.checked end
+function methods:EnableKeyboard(v) self.keyboard=v end
+local binds, saves, combat = {}, 0, false
+function GetBindingKey(action) for k,a in pairs(binds) do if a==action then return k end end end
+function GetBindingAction(key) return binds[key] or "" end
+function SetBinding(key, action) binds[key]=action end
+function SaveBindings() saves=saves+1 end
+function GetCurrentBindingSet() return 1 end
+function InCombatLockdown() return combat end
+local mods={}
+function IsAltKeyDown() return mods.alt end
+function IsControlKeyDown() return mods.ctrl end
+function IsShiftKeyDown() return mods.shift end
+local registered
+Settings={RegisterCanvasLayoutCategory=function(panel,name) registered={panel=panel,name=name}; return registered end,
+ RegisterAddOnCategory=function(c) c.added=true end}
+available=true
+ns=load({version=1,nextID=1,markers={}})
+assert(registered and registered.added and registered.name=="Map Mementos", "Settings page registered under the addon's title")
+assert(BINDING_NAME_MAPMEMENTOS_TOGGLE and BINDING_NAME_MAPMEMENTOS_ADD and BINDING_CATEGORY_MAPMEMENTOS)
+local bx=assert(io.open(root.."Bindings.xml","r")); local bsrc=bx:read("*a"); bx:close()
+assert(bsrc:find("MapMementos_ToggleJournal()",1,true) and bsrc:find("MapMementos_RememberHere()",1,true))
+MapMementos_ToggleJournal(); j=MapMementosJournal
+assert(j:IsShown(), "toggle binding opens the journal")
+MapMementos_ToggleJournal(); assert(not j:IsShown(), "toggle binding closes the journal")
+MapMementos_RememberHere(); assert(j:IsShown() and j.heading.text=="New entry", "Remember here opens a new entry")
+local function find(parent, text)
+ for _,f in ipairs(frames) do if f.parent==parent and type(f.text)=="table" and f.text.text==text then return f end end
+end
+local function descendant(f, root) while f do if f==root then return true end; f=f.parent end end
+local function caps(root)
+ local r={}; for _,f in ipairs(frames) do if f.action and descendant(f,root) then r[#r+1]=f end end; return r
+end
+local function minimapCheck(root)
+ for _,f in ipairs(frames) do if f.scripts.OnClick and f.checked~=nil and descendant(f,root) then return f end end
+end
+-- Esc > Options page: Open, keys, minimap icon.
+local page=registered.panel
+local pageCaps=caps(page); assert(#pageCaps==2 and pageCaps[1].text.text=="Not set")
+j:Hide(); SettingsPanel=frame(); local closed
+function HideUIPanel(p) closed=p; p:Hide() end
+find(page,"Open").scripts.OnClick(find(page,"Open"))
+assert(j:IsShown() and closed==SettingsPanel, "Open closes Settings and shows the journal")
+-- Listening: click, modifiers combine, Escape cancels, taken keys are replaced.
+local cap=pageCaps[1]
+cap.scripts.OnClick(cap,"LeftButton"); assert(cap.keyboard and cap.text.text=="Press a key")
+cap.scripts.OnKeyDown(cap,"ESCAPE"); assert(not cap.keyboard and not GetBindingKey("MAPMEMENTOS_TOGGLE"), "Escape cancels")
+binds["CTRL-J"]="TOGGLEGUILDTAB"; _G.BINDING_NAME_TOGGLEGUILDTAB="Guild"
+cap.scripts.OnClick(cap,"LeftButton"); mods.ctrl=true
+cap.scripts.OnKeyDown(cap,"LCTRL"); assert(cap.keyboard, "a modifier alone keeps listening")
+cap.scripts.OnKeyDown(cap,"J"); mods.ctrl=nil
+assert(binds["CTRL-J"]=="MAPMEMENTOS_TOGGLE" and saves>0 and cap.status.text=="Replaced Guild")
+assert(cap.text.text=="CTRL-J")
+-- Both settings blocks show the same key.
+find(j,"Settings").scripts.OnClick(find(j,"Settings"))
+assert(j.settings and j.settings:IsShown(), "journal Settings panel opens")
+local journalCaps=caps(j.settings); assert(#journalCaps==2 and journalCaps[1].text.text=="CTRL-J")
+journalCaps[2].scripts.OnClick(journalCaps[2],"LeftButton"); journalCaps[2].scripts.OnKeyDown(journalCaps[2],"K")
+assert(GetBindingKey("MAPMEMENTOS_ADD")=="K" and pageCaps[2].text.text=="K")
+journalCaps[2].scripts.OnClick(journalCaps[2],"RightButton")
+assert(not GetBindingKey("MAPMEMENTOS_ADD"), "right click clears")
+combat=true; cap.scripts.OnClick(cap,"LeftButton")
+assert(not cap.keyboard and cap.status.text=="Not in combat.", "no key changes in combat"); combat=false
+-- Minimap icon: shown by default, toggled from either block, saved.
+local check=minimapCheck(page); assert(check.checked==true and MapMementosMinimapButton:IsShown())
+check.checked=false; check.scripts.OnClick(check)
+assert(MapMementosDB.minimapHidden==true and not MapMementosMinimapButton:IsShown())
+assert(minimapCheck(j.settings).checked==false, "journal checkbox follows")
+ns=load(MapMementosDB); assert(not MapMementosMinimapButton:IsShown(), "hidden icon stays hidden after reload")
+ns.command("button show"); assert(MapMementosMinimapButton:IsShown() and MapMementosDB.minimapHidden==nil)
+print("PASS: key bindings and setters, Settings page, minimap icon toggle")
 
 -- Verify the shipped library cannot silently restore the native integration.
 local file=assert(io.open(root.."Libs/HereBeDragons-Pins-2.0.lua","r"))

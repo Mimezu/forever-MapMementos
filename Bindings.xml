@@ -1,0 +1,8 @@
+<Bindings>
+	<Binding name="MAPMEMENTOS_TOGGLE" category="BINDING_CATEGORY_MAPMEMENTOS">
+		MapMementos_ToggleJournal()
+	</Binding>
+	<Binding name="MAPMEMENTOS_ADD" category="BINDING_CATEGORY_MAPMEMENTOS">
+		MapMementos_RememberHere()
+	</Binding>
+</Bindings>

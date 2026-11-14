@@ -326,6 +326,17 @@ local function createJournal()
     tinsert(UISpecialFrames, "MapMementosJournal")
     if FrameGambitAPI and FrameGambitAPI.RegisterCinematicWindow then FrameGambitAPI.RegisterCinematicWindow(journal) end
     label(journal, "A field journal of places worth remembering", 76, -42, "GameFontHighlightSmall")
+    -- Keys and the minimap icon, beside the journal (Options.lua builds them).
+    button(journal, "Settings", 470, -70, 100, function()
+        if not journal.settings then
+            local panel = CreateFrame("Frame", nil, journal, "BackdropTemplate")
+            panel:SetPoint("TOPLEFT", journal, "TOPRIGHT", -2, -24); panel:SetSize(244, 196)
+            skin(panel); panel:EnableMouse(true); panel:Hide()
+            ns.BuildSettings(panel, 14, -14)
+            journal.settings = panel
+        end
+        journal.settings:SetShown(not journal.settings:IsShown())
+    end)
     button(journal, "+ Remember here", 18, -72, 196, function() edit(nil) end)
     local list = CreateFrame("ScrollFrame", nil, journal, "UIPanelScrollFrameTemplate")
     list:SetPoint("TOPLEFT", 18, -112); list:SetSize(174, 274)
@@ -438,12 +449,13 @@ local function command(message)
     elseif verb == "" or verb:lower() == "list" then edit(selected or next(db.markers))
     elseif verb:lower() == "button" then
         local shape = rest:lower()
+        if shape == "show" or shape == "hide" then ns.setLauncherShown(shape == "show"); return end
         if shape == "round" or shape == "square" then db.minimapShape = shape
         elseif shape == "auto" then db.minimapShape = nil
-        else say("/memento button round, square or auto sets the book button's path around the minimap."); return end
+        else say("/memento button show, hide, round, square or auto."); return end
         if MapMementosMinimapButton then positionLauncher(MapMementosMinimapButton) end
         say("Book button follows a " .. (squareMinimap() and "square" or "round") .. " minimap.")
-    else say("/memento opens your journal. /memento add opens a new entry here. /memento add Name ; Description saves immediately. /memento button round|square|auto.") end
+    else say("/memento opens your journal. /memento add opens a new entry here. /memento add Name ; Description saves immediately. /memento button show|hide|round|square|auto.") end
 end
 local events = CreateFrame("Frame")
 -- "square" when the player chose it (/memento button square) or another addon
@@ -544,6 +556,8 @@ events:SetScript("OnEvent", function(_, event, name, blockedFunction)
         end)
         -- Follow minimap resizes (skins such as EllesmereUI change its size).
         Minimap:HookScript("OnSizeChanged", function() positionLauncher(launcher) end)
+        launcher:SetShown(not db.minimapHidden)
+        if ns.RegisterSettings then ns.RegisterSettings() end
     elseif event == "ADDON_LOADED" and name == "Blizzard_WorldMap" and db and not worldProvider then
         installWorldProvider()
         if worldProvider then worldProvider:RefreshAllData() end
@@ -551,5 +565,16 @@ events:SetScript("OnEvent", function(_, event, name, blockedFunction)
 end)
 -- Exposed only to the offline regression harness through the addon namespace.
 ns.capture, ns.save, ns.command = capture, save, command
+-- Shared with Options.lua (settings, key bindings).
+ns.label, ns.button = label, button
+function ns.db() return db end
+function ns.toggle() if journal and journal:IsShown() then journal:Hide() else command("") end end
+function ns.rememberHere() edit(nil) end
+function ns.openJournal() if not (journal and journal:IsShown()) then command("") end end
+function ns.setLauncherShown(shown)
+    db.minimapHidden = not shown or nil
+    if MapMementosMinimapButton then MapMementosMinimapButton:SetShown(shown) end
+    if ns.RefreshSettings then ns.RefreshSettings() end
+end
 ns.mapPosition, ns.positionLauncher = mapPosition, positionLauncher
 

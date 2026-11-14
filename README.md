@@ -9,6 +9,7 @@ and on the minimap when nearby. Hover to read your notes; click to edit.
 - `/memento add Old oak ; A peaceful place to rest.`: save immediately.
 - Minimap book: left click opens the journal; right click remembers here.
 - Drag the minimap book around the rim; its position is saved.
+- Keys and the minimap icon: journal > Settings, or Esc > Options > AddOns > Map Mementos. `/memento button show|hide`.
 - Select an entry to change its name, symbol or notes, then Save entry.
 - Delete, then Confirm? removes the selected entry.
 
