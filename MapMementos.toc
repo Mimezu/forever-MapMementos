@@ -2,7 +2,7 @@
 ## Title: Map Mementos
 ## Notes: A field journal of places worth remembering. /memento
 ## Author: Mimezu
-## Version: 1.1.0
+## Version: 1.1.1
 ## SavedVariables: MapMementosDB
 ## LoadSavedVariablesFirst: 1
 # Settings load through native SavedVariables.
