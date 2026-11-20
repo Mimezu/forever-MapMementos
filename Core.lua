@@ -295,11 +295,10 @@ local function input(parent, x, y, width, height, multiline)
     local scroll = CreateFrame("ScrollFrame", nil, surround, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 8, -7); scroll:SetPoint("BOTTOMRIGHT", -28, 7)
     local box = CreateFrame("EditBox", nil, scroll)
-    box:SetWidth(width - 40); box:SetHeight(height - 14); box:SetMultiLine(multiline)
+    box:SetWidth(width - 40); box:SetHeight(height - 14); box:SetMultiLine(true)
     box:SetFontObject(ChatFontNormal); box:SetTextColor(.92, .88, .78); box:SetAutoFocus(false)
-    box:SetMaxLetters(multiline and 1200 or 64)
+    box:SetMaxLetters(1200)
     box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    if not multiline then box:SetScript("OnEnterPressed", function(self) self:ClearFocus() end) end
     scroll:SetScrollChild(box)
     surround:EnableMouse(true); surround:SetScript("OnMouseDown", function() box:SetFocus() end)
     return box
